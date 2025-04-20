@@ -4,8 +4,10 @@ include '../includes/header.php';
 include '../includes/nav.php';
 include '../includes/db.php';
 
+// Get supervisor ID from session
 $enseignant_id = $_SESSION['id'];
 
+// Handle report confirmation
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_report'])) {
     $pfe_id = $_POST['pfe_id'];
     $sql = "UPDATE pfes SET rapport_confirme = 1 WHERE id = '$pfe_id' AND encadrant_in_id = '$enseignant_id'";
@@ -18,6 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_report'])) {
     exit();
 }
 
+// Fetch students' PFE details for this supervisor
 $sql = "SELECT p.*, e.nom as etudiant_nom, e.prenom as etudiant_prenom
         FROM pfes p 
         JOIN etudiants e ON p.etudiant_id = e.id 
@@ -64,8 +67,8 @@ $result = mysqli_query($conn, $sql);
                                     <td><?= htmlspecialchars($pfe['etudiant_prenom'] . ' ' . $pfe['etudiant_nom']) ?></td>
                                     <td><?= htmlspecialchars($pfe['titre']) ?></td>
                                     <td><?= htmlspecialchars($pfe['organisme']) ?></td>
-                                    <td><?= htmlspecialchars($pfe['date_debut']) ?></td>
-                                    <td><?= htmlspecialchars($pfe['date_fin']) ?></td>
+                                    <td><?= isset($pfe['date_debut']) ? htmlspecialchars($pfe['date_debut']) : 'Non spécifiée' ?></td>
+                                    <td><?= isset($pfe['date_fin']) ? htmlspecialchars($pfe['date_fin']) : 'Non spécifiée' ?></td>
                                     <td>
                                         <?php if ($pfe['rapport_confirme'] == 1): ?>
                                             <span class="badge badge-success">Rapport confirmé</span>
@@ -74,7 +77,11 @@ $result = mysqli_query($conn, $sql);
                                         <?php endif; ?>
                                     </td>
                                     <td>
-                                        <a href="../uploads/<?= $pfe['rapport_path'] ?>" class="btn btn-primary btn-sm" target="_blank">Voir rapport</a>
+                                        <?php if (!empty($pfe['rapport'])): ?>
+                                            <a href="../uploads/pfes/<?= htmlspecialchars($pfe['rapport']) ?>" class="btn btn-primary btn-sm" target="_blank">Voir rapport</a>
+                                        <?php else: ?>
+                                            <span class="text-muted">Aucun rapport</span>
+                                        <?php endif; ?>
                                         <?php if ($pfe['rapport_confirme'] == 0): ?>
                                             <form method="post" style="display: inline;">
                                                 <input type="hidden" name="pfe_id" value="<?= $pfe['id'] ?>">
